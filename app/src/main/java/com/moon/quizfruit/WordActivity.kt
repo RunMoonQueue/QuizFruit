@@ -9,18 +9,13 @@ import android.view.View
 import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
-import androidx.annotation.NonNull
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.ActionBar
 import androidx.appcompat.app.AppCompatActivity
-import com.google.android.gms.ads.AdError
+import com.google.android.gms.ads.AdListener
 import com.google.android.gms.ads.AdRequest
-import com.google.android.gms.ads.LoadAdError
+import com.google.android.gms.ads.InterstitialAd
 import com.google.android.gms.ads.MobileAds
-import com.google.android.gms.ads.rewarded.RewardItem
-import com.google.android.gms.ads.rewarded.RewardedAd
-import com.google.android.gms.ads.rewarded.RewardedAdCallback
-import com.google.android.gms.ads.rewarded.RewardedAdLoadCallback
 import com.moon.quizfruit.databinding.ActivityWordBinding
 import com.moon.quizsnack.Const
 import com.moon.quizsnack.data.Item
@@ -31,8 +26,8 @@ import kotlin.collections.ArrayList
 class WordActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityWordBinding
-    private lateinit var rewardedAd: RewardedAd
-    private lateinit var timerTask: Timer
+    private lateinit var frontAd: InterstitialAd
+//    private lateinit var timerTask: Timer
 
     private var stage = 1
 
@@ -76,30 +71,42 @@ class WordActivity : AppCompatActivity() {
         initResult()
         initAds()
 
-        start()
+//        start()
     }
 
     private fun initAds() {
-        MobileAds.initialize(this) {}
+        MobileAds.initialize(this, "ca-app-pub-3578188838033823~4967392001")
         binding.adView.run {
             loadAd(AdRequest.Builder().build())
         }
+        frontAd = InterstitialAd(this).apply {
+            adUnitId = "ca-app-pub-3578188838033823/5230668773"
+            // TEST
+//            adUnitId = "ca-app-pub-3940256099942544/1033173712"
+            loadAd(AdRequest.Builder().build())
+            adListener = object : AdListener() {
 
-        rewardedAd = RewardedAd(
-            this,
-            "ca-app-pub-3578188838033823/3702751105"
-        )
-        val adLoadCallback = object : RewardedAdLoadCallback() {
-            override fun onRewardedAdLoaded() {
-                super.onRewardedAdLoaded()
-                binding.adsVideo.isEnabled = true
-            }
+                override fun onAdClosed() {
+                    super.onAdClosed()
+                    frontAd.loadAd(AdRequest.Builder().build())
+                    Log.i("MQ!", "onAdClosed")
+                    var pref = getSharedPreferences("quiz", MODE_PRIVATE)
+                    var gold = pref.getInt("gold", 200)
+                    gold += 290
+                    binding.toolbar.findViewById<TextView>(R.id.gold).run {
+                        text = gold.toString()
+                    }
+                    pref.edit().putInt("gold", gold).commit()
+                    Toast.makeText(this@WordActivity, "290점이 추가 되었습니다.", Toast.LENGTH_SHORT)
+                        .show()
+                }
 
-            override fun onRewardedAdFailedToLoad(adError: LoadAdError?) {
-                super.onRewardedAdFailedToLoad(adError)
+                override fun onAdLoaded() {
+                    super.onAdLoaded()
+                    binding.adsVideo.isEnabled = true
+                }
             }
         }
-        rewardedAd.loadAd(AdRequest.Builder().build(), adLoadCallback)
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
@@ -135,7 +142,7 @@ class WordActivity : AppCompatActivity() {
             binding.board.visibility = View.VISIBLE
             heart = 4
             updateHeart()
-            start()
+//            start()
         }
         binding.retry.setOnClickListener {
             stage = 1
@@ -145,60 +152,51 @@ class WordActivity : AppCompatActivity() {
             heart = 4
             updateHeart()
             time = 0
-            start()
+//            start()
         }
         binding.adsVideo.setOnClickListener {
-            if (rewardedAd.isLoaded) {
-                val adCallback = object : RewardedAdCallback() {
-                    override fun onRewardedAdOpened() {
-                        // Ad opened.
-                    }
-
-                    override fun onRewardedAdClosed() {
-                        // Ad closed.
-                        rewardedAd = createAndLoadRewardedAd()
-                    }
-
-                    override fun onUserEarnedReward(@NonNull reward: RewardItem) {
-                        // User earned reward.
-                        Log.i("MQ!", "onUserEarnedRewards")
-                        var gold = pref.getInt("gold", 200)
-                        gold += 290
-                        binding.toolbar.findViewById<TextView>(R.id.gold).run {
-                            text = gold.toString()
-                        }
-                        pref.edit().putInt("gold", gold).commit()
-                        Toast.makeText(this@WordActivity, "290점이 추가 되었습니다.", Toast.LENGTH_SHORT)
-                            .show()
-
-                    }
-
-                    override fun onRewardedAdFailedToShow(adError: AdError) {
-                        // Ad failed to display.
-                    }
-                }
-                rewardedAd.show(this, adCallback)
+            if (frontAd.isLoaded) {
+                frontAd.show()
             } else {
                 Toast.makeText(this, "아직 광고 준비가 되지 않았습니다. \n로딩이 된 후에 선택 해주세요.", Toast.LENGTH_SHORT)
                     .show()
             }
-        }
-    }
 
-    private fun createAndLoadRewardedAd(): RewardedAd {
-        val rewardedAd = RewardedAd(this, "ca-app-pub-3578188838033823/3702751105")
-        val adLoadCallback = object : RewardedAdLoadCallback() {
-            override fun onRewardedAdLoaded() {
-                // Ad successfully loaded.
-                binding.adsVideo.isEnabled = true
-            }
-
-            override fun onRewardedAdFailedToLoad(adError: LoadAdError) {
-                // Ad failed to load.
-            }
+//            if (rewardedAd.isLoaded) {
+//                val adCallback = object : RewardedAdCallback() {
+//                    override fun onRewardedAdOpened() {
+//                        // Ad opened.
+//                    }
+//
+//                    override fun onRewardedAdClosed() {
+//                        // Ad closed.
+//                        rewardedAd = createAndLoadRewardedAd()
+//                    }
+//
+//                    override fun onUserEarnedReward(@NonNull reward: RewardItem) {
+//                        // User earned reward.
+//                        Log.i("MQ!", "onUserEarnedRewards")
+//                        var gold = pref.getInt("gold", 200)
+//                        gold += 290
+//                        binding.toolbar.findViewById<TextView>(R.id.gold).run {
+//                            text = gold.toString()
+//                        }
+//                        pref.edit().putInt("gold", gold).commit()
+//                        Toast.makeText(this@WordActivity, "290점이 추가 되었습니다.", Toast.LENGTH_SHORT)
+//                            .show()
+//
+//                    }
+//
+//                    override fun onRewardedAdFailedToShow(adError: AdError) {
+//                        // Ad failed to display.
+//                    }
+//                }
+//                rewardedAd.show(this, adCallback)
+//            } else {
+//                Toast.makeText(this, "아직 광고 준비가 되지 않았습니다. \n로딩이 된 후에 선택 해주세요.", Toast.LENGTH_SHORT)
+//                    .show()
+//            }
         }
-        rewardedAd.loadAd(AdRequest.Builder().build(), adLoadCallback)
-        return rewardedAd
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
@@ -226,11 +224,10 @@ class WordActivity : AppCompatActivity() {
                     pref.edit().putInt("gold", value).commit()
                 }
                 if (stage == list.size) {
-//                    // Result화면으로 변경
+                    // Result화면으로 변경
                     binding.board.visibility = View.INVISIBLE
                     binding.wordResult.visibility = View.VISIBLE
                     binding.result.text = "결과: $stage\n최고: $lastStage"
-                    binding.continueGame.isEnabled = false
 //                    binding.continueGame.text = "순위 올리기"
 //                    binding.continueGame.setOnClickListener {
 //                        MaterialAlertDialogBuilder(this).apply {
@@ -245,17 +242,16 @@ class WordActivity : AppCompatActivity() {
 //                                Log.i(
 //                                    "MQ!", "rank id: ${editText.text.toString()}" +
 //                                            "\nscore: ${binding.score.text}" +
-//                                            "\ndate: ${LocalDateTime.now()
-//                                                .format(DateTimeFormatter.ISO_LOCAL_DATE)}"
+//                                            "\ndate: ${SimpleDateFormat("MM-dd h:mm").format(Calendar.getInstance().time)}"
 //                                )
 //                                val registerRef =
 //                                    FirebaseDatabase.getInstance().reference.child("Rank")
-//                                        .child((Calendar.MONTH + 1).toString() + "월").push()
+//                                        .child((Calendar.MONTH + 2).toString() + "월").push()
 //                                registerRef.setValue(
 //                                    Rank(
 //                                        editText.text.toString(),
 //                                        Integer.parseInt(binding.score.text.toString()),
-//                                        LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE)
+//                                        SimpleDateFormat("MM-dd h:mm").format(Calendar.getInstance().time)
 //                                    )
 //                                )
 //                                finish()
@@ -263,19 +259,15 @@ class WordActivity : AppCompatActivity() {
 //                                dialog.dismiss()
 //                            }
 //                            setNegativeButton("취소") { dialog, _ ->
-//                                dialog.dismiss(2)
+//                                dialog.dismiss()
 //                            }
 //                            show()
 //                        }
 //                    }
                     binding.description.text = "축하합니다! 모두 풀었습니다!"
-                    pause()
+//                    pause()
                 } else {
                     updateAnimate()
-                    binding.toolbar.findViewById<TextView>(R.id.stage)?.run {
-                        text = stage.toString()
-                    }
-
                 }
             } else {
                 // 틀림
@@ -300,7 +292,7 @@ class WordActivity : AppCompatActivity() {
                 binding.board.visibility = View.INVISIBLE
                 binding.wordResult.visibility = View.VISIBLE
                 binding.result.text = "결과: $stage\n최고: $lastStage"
-                pause()
+//                pause()
             }
             1 -> {
                 binding.toolbar.findViewById<ImageView>(R.id.heart_1)
@@ -369,7 +361,7 @@ class WordActivity : AppCompatActivity() {
 
     private fun nextStage() {
         binding.toolbar.findViewById<TextView>(R.id.stage)?.run {
-            text = stage.toString()
+            text = "LV.$stage"
         }
 
         var pref = getSharedPreferences("quiz", MODE_PRIVATE)
@@ -465,16 +457,16 @@ class WordActivity : AppCompatActivity() {
         }
     }
 
-    private fun start() {
-        timerTask = kotlin.concurrent.timer(period = 1000) {
-            time++
-            runOnUiThread {
-                binding.score.text = time.toString()
-            }
-        }
-    }
-
-    private fun pause() {
-        timerTask.cancel()
-    }
+//    private fun start() {
+//        timerTask = kotlin.concurrent.timer(period = 1000) {
+//            time++
+//            runOnUiThread {
+//                binding.score.text = time.toString()
+//            }
+//        }
+//    }
+//
+//    private fun pause() {
+//        timerTask.cancel()
+//    }
 }

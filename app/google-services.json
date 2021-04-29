@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "190777095095",
+    "project_id": "quizfruit-dc321",
+    "storage_bucket": "quizfruit-dc321.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:190777095095:android:b92897f697bea34c50ee32",
+        "android_client_info": {
+          "package_name": "com.moon.quizfruit"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "190777095095-dvppmok5qgbpn52ko686e1rahlafamna.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.moon.quizfruit",
+            "certificate_hash": "ab2e547f57cbb4215b27ee18d118f08d3779f506"
+          }
+        },
+        {
+          "client_id": "190777095095-ut85iip4pfs3cbssttuor1rhs8m0jcb6.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBT0kx0H8RV1dJ-rJjjjclTHBoWtIK95Ww"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "190777095095-ut85iip4pfs3cbssttuor1rhs8m0jcb6.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
